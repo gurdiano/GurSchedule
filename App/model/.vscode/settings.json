@@ -1,0 +1,7 @@
+{
+    "python.analysis.extraPaths": ["C:/Users/tiago/Desktop/GurSchedule"],
+    "workbench.colorTheme": "Monokai",
+    "files.exclude": {
+        "**/__pycache__": true,
+    }
+}

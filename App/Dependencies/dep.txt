@@ -1,8 +1,0 @@
-:: FrontEnd
-
-pip install flet
-
-:: BackEnd
-
-pip install psycopg2
-pip install SQLAlchemy
