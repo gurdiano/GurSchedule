@@ -81,3 +81,15 @@ ss7 = schedService.create(day=dd7, begin=time(16, 0), priority=pp2, task=tt7, ho
 
 session.add(ss1)
 session.commit()
+
+ddd1 = dayService.create(date=date(2025, 4, 22))
+ddd2 = dayService.create(date=date(2025, 4, 23))
+ddd3 = dayService.create(date=date(2025, 4, 24))
+
+sss1 = schedService.create(day=ddd1, begin=time(10, 0), priority=pp1, task=tt1, hour=10)
+sss2 = schedService.create(day=ddd2, begin=time(11, 0), priority=pp2, task=tt2, hour=11)
+sss3 = schedService.create(day=ddd3, begin=time(12, 0), priority=pp3, task=tt3, hour=12)
+
+session.add(sss1)
+session.commit()
+

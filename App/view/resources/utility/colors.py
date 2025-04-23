@@ -1,0 +1,8 @@
+BLACK_0 = '#000000'
+BLACK_1 = '#020202'
+BLACK_2 = '#0a0a0a'
+BLACK_3 = '#0d0d0d'
+WHITE_1 = '#ffffff'
+WHITE_2 = '#e6ffffff'
+CTEXT_1 = "#868686"
+CTHEME_1 = '#e91e63'

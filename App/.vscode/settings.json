@@ -3,5 +3,6 @@
     "python.defaultInterpreterPath": "C:/Users/tiago/Desktop/GurSchedule/Scripts/python.exe",
     "files.exclude": {
         "**/__pycache__": true,
+        "**/storage": true,
     }
 }
