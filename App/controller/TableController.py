@@ -1,5 +1,6 @@
 from App.view.components.Table import Table
 from App.view.components.TaskDisplay import TaskDisplay
+from App.view.components.TaskDetails import TaskDetails
 
 from App.model.services import SchedulerService
 from App.model.services import DayService
@@ -12,7 +13,7 @@ class TableController:
         self.schedService = SchedulerService(SESSION)
         self.dayService = DayService(SESSION)
         self.view = Table(self, page)
-        self.page.pubsub.subscribe_topic('dateupdate', self. date_update_handler)
+        self.page.pubsub.subscribe_topic('dateupdate', self.date_update_handler)    
 
     def date_update_handler(self, topic, message):
         self.view.rows_date_update(message)
@@ -22,7 +23,8 @@ class TableController:
             page= self.page,
             title= sched.task.name,
             i_src= sched.task.icon.src,
-            color= sched.priority.color
+            color= sched.priority.color,
+            data= sched
         )
 
     def search_sched(self, date=None, hour=None):

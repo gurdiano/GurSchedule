@@ -1,25 +1,28 @@
 from App.model.models import Priority
 from sqlalchemy.exc import IntegrityError
+from App.model.exc.IntegrityError import IntegrityError as _IntegrityError
+
 
 class PriorityService():
     def __init__(self, session):
         self.session = session
 
     def create(self, name, color, icon):
+        icon = icon.id if icon else None
         try:
             sess = self.session
             obj = Priority()
 
             obj.name = name
             obj.color = color
-            obj.icon_id = icon.id
+            obj.icon_id = icon
 
             sess.add(obj)
             sess.commit()
             sess.refresh(obj)
             return obj
         except IntegrityError:
-            raise Exception(f'IntegrityError: the {name} already exists!')
+            raise _IntegrityError(name, f'IntegrityError: the {name} already exists!')
         except Exception as e:
             raise Exception(f'error: {type(e).__name__} failed to create a Priority!')
 

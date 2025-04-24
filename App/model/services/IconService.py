@@ -1,5 +1,6 @@
 from App.model.models import Icon
 from sqlalchemy.exc import IntegrityError, StatementError
+from App.model.exc.IntegrityError import IntegrityError as _IntegrityError
 
 class IconService():
     def __init__(self, session):
@@ -14,7 +15,7 @@ class IconService():
             sess.refresh(obj)
             return obj
         except IntegrityError:
-            raise Exception(f'IntegrityError: the {src} already exists!')
+            raise _IntegrityError(src, f'IntegrityError: the {src} already exists!')
         except StatementError:
             raise Exception(f'StatementError: input ({src}) must be a path!')
         except Exception as e:

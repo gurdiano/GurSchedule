@@ -4,6 +4,7 @@ from .PickerControler import PickerController
 from .MarkerController import MarkerController
 from .TableController import TableController
 from .TimerController import TimerController
+from .TaskController import TaskController
 
 class LayoutController():
     def __init__(self, page):
@@ -15,6 +16,7 @@ class LayoutController():
         self.markerController = MarkerController(page)
         self.tableController = TableController(page)
         self.timerController = TimerController(page)
+        self.taskController = TaskController(page)
 
         self.view = AppLayout(self, page)
 

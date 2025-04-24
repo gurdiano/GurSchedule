@@ -5,10 +5,8 @@ from App.view.resources.utility.fontsize import S3
 from App.view.resources.utility.colors import BLACK_0, BLACK_3, WHITE_2, CTHEME_1
 from App.view.resources.utility.convs import color_grad
 
-from App.view.resources.utility.srcs import MOOM_SOLID
-
 class TaskDisplay(ft.Container):
-    def __init__(self, page, title, i_src, color):
+    def __init__(self, page, title, i_src, color, data):
         super().__init__()
         self.page = page
 
@@ -19,6 +17,8 @@ class TaskDisplay(ft.Container):
         self.title = title
         self.i_src = i_src
         self.color = color
+        self.data = data
+        self.on_click = self._on_click
 
     def _create_text(self, title, color):
         return ft.Text(
@@ -50,6 +50,9 @@ class TaskDisplay(ft.Container):
         circle.content = svg
         return border
     
+    def _on_click(self, e):
+        self.page.pubsub.send_all_on_topic('taskdisplay', self.data)
+
     def create_priority_view(self):
         icon = self._create_icon(self.i_src, self.color)
         text = self._create_text(self.title, WHITE_2)

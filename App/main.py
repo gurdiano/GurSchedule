@@ -7,11 +7,17 @@ def main(page: ft.Page):
     page.padding = 0
     page.window.frameless = True
     
-    controller = LayoutController(page) 
+    controller = LayoutController(page)
+
+    #teste field
+    from App.controller.TaskController import TaskController
+
+    taskController = TaskController(page)
 
     page.add(
         ft.WindowDragArea(
-            controller.view.build()
+            # controller.view.build()
+            taskController.taskCreator
         )
     )
 

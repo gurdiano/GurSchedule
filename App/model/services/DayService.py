@@ -1,5 +1,6 @@
 from App.model.models import Day
 from sqlalchemy.exc import IntegrityError, StatementError
+from App.model.exc.IntegrityError import IntegrityError as _IntegrityError
 
 class DayService():
     def __init__(self, session):
@@ -16,7 +17,7 @@ class DayService():
 
             return obj
         except IntegrityError:
-            raise Exception(f'IntegrityError: the date {date} already exists!')
+            raise _IntegrityError(date, f'the date {date} already exists!')
         except StatementError:
             raise Exception(f'StatementError: input ({date}) must be a date!')
         except Exception as e:

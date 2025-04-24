@@ -1,6 +1,8 @@
 from App.model.models import Scheduler
 from sqlalchemy.exc import IntegrityError, StatementError
 from App.model.services.__HourService import HourService
+from App.model.exc.IntegrityError import IntegrityError as _IntegrityError
+
 
 class SchedulerService():
     def __init__(self, session):
@@ -29,7 +31,7 @@ class SchedulerService():
             sess.refresh(obj)
             return obj
         except IntegrityError:
-            raise Exception(f'IntegrityError: the scheduling already exists!')
+            raise _IntegrityError(None, f'IntegrityError: the scheduling already exists!')
         except StatementError:
             raise Exception(f'StatementError: invalid input')
         except Exception as e:

@@ -1,5 +1,6 @@
 from App.model.models import Task
 from sqlalchemy.exc import IntegrityError, StatementError
+from App.model.exc.IntegrityError import IntegrityError as _IntegrityError
 
 class TaskService():
     def __init__(self, session):
@@ -9,17 +10,19 @@ class TaskService():
         try:
             sess = self.session
             obj = Task()
+            
+            icon = icon.id if icon else None
 
             obj.name = name 
             obj.duration = duration
-            obj.icon_id = icon.id
+            obj.icon_id = icon
 
             sess.add(obj)
             sess.commit()
             sess.refresh(obj)
             return obj
         except IntegrityError:
-            raise Exception(f'IntegrityError: the {name} {duration} already exists!')
+            raise _IntegrityError(name, f'IntegrityError: the {name} {duration} already exists!')
         except StatementError:
             raise Exception(f'StatementError: invalid input')
         except Exception as e:
@@ -39,9 +42,11 @@ class TaskService():
         
     def update(self, id, icon):
         try:
+            icon = icon.id if icon else None
+
             sess = self.session
             obj = self.find(id=id)
-            obj.icon_id = icon.id
+            obj.icon_id = icon
             sess.commit()
         except Exception as e:
             raise Exception(f'error: {type(e).__name__} failed to update task!')
