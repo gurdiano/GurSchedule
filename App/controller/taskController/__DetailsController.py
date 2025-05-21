@@ -15,18 +15,11 @@ from App.model.services import SchedulerService
 
 from App.dtos.SchedDTO import SchedDTO
 
-from .. import SESSION
+from App.model.config import get_db
 
 class DetailsController:
     def __init__(self, page):
         self.page = page
-
-        self.dayService = DayService(SESSION)
-        self.priorityService = PriorityService(SESSION)
-        self.iconService = IconService(SESSION)
-        self.taskService = TaskService(SESSION)
-        self.schedulerService = SchedulerService(SESSION)
-        
         self.view = TaskDetails(self, page)
 
     def get_priorities_handler(self, priorities):
@@ -114,67 +107,79 @@ class DetailsController:
         pass
     
     def __get_day(self, date):
-        try:
-            day = self.dayService.create(date= date)
-        except IntegrityError:
-            SESSION.rollback()
-            day = self.dayService.find(date= date)
-        except Exception as e: 
-            raise UnknownError('__get_day()')
-        return day
+        with get_db() as session:
+            dayService = DayService(session)
+
+            try:
+                day = dayService.create(date= date)
+            except IntegrityError:
+                session.rollback()
+                day = dayService.find(date= date)
+            except Exception as e: 
+                raise UnknownError('__get_day()')
+            return day
 
     def __get_priority(self, data):
-        try:
-            name = data['name']
-            color = data['color']
+        with get_db() as session:
+            priorityService = PriorityService(session)
 
-            priority = self.priorityService.find(name= name)
+            try:
+                name = data['name']
+                color = data['color']
 
-            if priority is None: 
-                return self.priorityService.create(
-                    name= name,
-                    color= color,
-                    icon_id= 7,
-                )
-            if priority.color != color: 
-                self.priorityService.update(priority.id, color)
+                priority = priorityService.find(name= name)
 
-            return priority
-        except Exception:
-            raise UnknownError('__get_priority()')
+                if priority is None: 
+                    return priorityService.create(
+                        name= name,
+                        color= color,
+                        icon_id= 7,
+                    )
+                if priority.color != color: 
+                    priorityService.update(priority.id, color)
+
+                return priority
+            except Exception:
+                raise UnknownError('__get_priority()')
 
     def __get_task(self, name, duration, icon_src):
-        icon = self.iconService.find(src= icon_src)
-        try:
-            return self.taskService.create(name= name, duration= duration, icon= icon)
-        except IntegrityError as e:
-            SESSION.rollback()
-            task = self.taskService.find(name= name, duration= duration)
-            if task.icon != icon: self.taskService.update(task.id, icon)
-            return task
-        except Exception:
-            raise UnknownError('__get_task')
+        with get_db() as session:
+            iconService = IconService(session)
+            taskService = TaskService(session)
+
+            icon = iconService.find(src= icon_src)
+            try:
+                return taskService.create(name= name, duration= duration, icon= icon)
+            except IntegrityError as e:
+                session.rollback()
+                task = taskService.find(name= name, duration= duration)
+                if task.icon != icon: taskService.update(task.id, icon)
+                return task
+            except Exception:
+                raise UnknownError('__get_task')
         
     def __get_sched(self, day, priority, task, hour, begin, annotation):
-        try:
-            return self.schedulerService.create(
-                day= day,
-                priority= priority,
-                task= task,
-                hour= hour,
-                begin= begin,
-                annotation= annotation,
-            )
-        except IntegrityError:
-            SESSION.rollback()
-            sched = self.schedulerService.find(day= day, task= task, hour=hour)
-            
-            if priority != sched.priority or annotation != sched.annotation:
-                self.schedulerService.update(priority= priority, annotation= annotation, id=sched.id)
-            return sched
-        except NoFreeTime:
-            print(f'*** error -> NoFreeTime: to implement ***') # when there's no available time in an hour...
-        except TaskConflicted:
-            print(f'*** error -> TaskConflicted: to implement ***') # when there is available time, but there is other tasks within period...
-        except Exception:
-            raise UnknownError('__get_sched()')
+        with get_db() as session:
+            schedulerService = SchedulerService(session)
+
+            try:
+                return schedulerService.create(
+                    day= day,
+                    priority= priority,
+                    task= task,
+                    hour= hour,
+                    begin= begin,
+                    annotation= annotation,
+                )
+            except IntegrityError:
+                session.rollback()
+                sched = schedulerService.find(day= day, task= task, hour=hour)
+                if priority != sched.priority or annotation != sched.annotation:
+                    schedulerService.update(priority= priority, annotation= annotation, id=sched.id)
+                return sched
+            except NoFreeTime:
+                print(f'*** error -> NoFreeTime: to implement ***') # when there's no available time in an hour...
+            except TaskConflicted:
+                print(f'*** error -> TaskConflicted: to implement ***') # when there is available time, but there is other tasks within period...
+            except Exception:
+                raise UnknownError('__get_sched()')

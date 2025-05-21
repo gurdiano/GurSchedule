@@ -1,25 +1,19 @@
+import flet as ft
+
 from App.view.components import TaskCreator
 
 from App.model.services import SchedulerService
 from App.model.services import IconService
 from App.model.services import PriorityService
 
-from .. import SESSION
-
-import flet as ft
-
 from App.dtos.SchedDTO import SchedDTO
 from App.dtos.RowDTO import RowDTO
+
+from App.model.config import get_db
 
 class CreatorController:
     def __init__(self, page: ft.Page):
         self.page = page
-
-        self.schedulerService = SchedulerService(SESSION)
-        self.iconService = IconService(SESSION)
-
-        self.priorityService = PriorityService(SESSION)
-
         self.view = TaskCreator(self, page)
 
     def on_completed(self, data: SchedDTO):
@@ -33,12 +27,15 @@ class CreatorController:
         self.page.pubsub.send_all_on_topic('load-priorities', 'CreatorController')
     
     def on_selected_task(self, sched_id):
-        sched = self.schedulerService.find(id= sched_id)
+        with get_db() as session:
+            schedulerService = SchedulerService(session)
 
-        if sched:
-            schedDTO = self.__schedDTO(sched)
-            self.page.pubsub.send_all_on_topic('task-selected', schedDTO)
-        pass
+            sched = schedulerService.find(id= sched_id)
+
+            if sched:
+                schedDTO = self.__schedDTO(sched)
+                self.page.pubsub.send_all_on_topic('task-selected', schedDTO)
+            pass
 
     def get_priorities_handler(self, priorities):
         self.view.priority_content.set_options(priorities)
@@ -80,38 +77,38 @@ class CreatorController:
         self.page.update()
         pass
 
-    def icon_on_click(self, sched_id):
-        sched = self.schedulerService.find(sched_id)
-        data = self.__schedDTO(sched)
-        self.page.overlay.clear()
-        self.get_task_details_handler('icon-onclick', data)
-
     def _load_icons(self, n):
-        items = self.iconService.get_last_items(n)
+        with get_db() as session:
+            iconService = IconService(session)
 
-        res = []
-        for item in items:
-            res.append(item.src)
-        return res
+            items = iconService.get_last_items(n)
+
+            res = []
+            for item in items:
+                res.append(item.src)
+            return res
     
     def _load_scheds(self, n, id):
-        items = self.schedulerService.get_distinct_last_items(n, id)
+        with get_db() as session:
+            schedulerService = SchedulerService(session)
 
-        res = []
-        for item in items:
-            _id  = item.id
-            name = item.task.name
-            src = item.task.icon.src
-            color = item.priority.color
+            items = schedulerService.get_distinct_last_items(n, id)
 
-            json = {
-                'id' : _id,
-                'name' : name,
-                'src' : src,
-                'color' : color,
-            }
-            res.append(json)
-        return res
+            res = []
+            for item in items:
+                _id  = item.id
+                name = item.task.name
+                src = item.task.icon.src
+                color = item.priority.color
+
+                json = {
+                    'id' : _id,
+                    'name' : name,
+                    'src' : src,
+                    'color' : color,
+                }
+                res.append(json)
+            return res
 
     def __schedDTO(self, sched):
         day = sched.day

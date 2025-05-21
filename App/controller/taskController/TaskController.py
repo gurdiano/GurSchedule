@@ -5,28 +5,17 @@ from App.dtos.SchedDTO import SchedDTO
 from App.dtos.RowDTO import RowDTO
 from App.dtos.DisplayDTO import DisplayDTO
 
-from App.model.exc.UnknownError import UnknownError
-
-class PiruError(Exception):
-    def __init__(self, *args, msgg):
-        super().__init__(*args)
-
-        self.msgg = msgg
-
-from .. import SESSION
-
 from .__CreatorController import CreatorController
 from .__DetailsController import DetailsController
 from .__DisplayController import DisplayController
+
+from App.model.config import get_db
 
 class TaskController:
     def __init__(self, page):
         self.page = page    
         self.details = None
         self.last_call = None
-
-        self.schedulerService = SchedulerService(SESSION)
-        self.priorityService = PriorityService(SESSION)
 
         self.creatorController = CreatorController(page)
         self.detailsController = DetailsController(page)
@@ -69,22 +58,24 @@ class TaskController:
         pass
     
     def task_display_handler(self, topic, message: DisplayDTO):
-        sched = self.schedulerService.find(id= message.sched_id)
-        parent  = message.parent
+        with get_db() as session:
+            schedulerService = SchedulerService(session)
 
-        schedDTO = self.__schedDTO(sched)
+            sched = schedulerService.find(id= message.sched_id)
+            parent  = message.parent
+            schedDTO = self.__schedDTO(sched)
 
-        rowDTO = RowDTO(
-            n_row= parent.data['row'],
-            n_column= parent.data['column'],
-            date= parent.data['date'],
-            time= parent.data['time'],
-            control= parent.control
-        )
+            rowDTO = RowDTO(
+                n_row= parent.data['row'],
+                n_column= parent.data['column'],
+                date= parent.data['date'],
+                time= parent.data['time'],
+                control= parent.control
+            )
 
-        self.last_call = rowDTO
-        self.detailsController.open_details_handler(topic, schedDTO)
-        pass
+            self.last_call = rowDTO
+            self.detailsController.open_details_handler(topic, schedDTO)
+            pass
 
     def last_call_handler(self, topic, message: RowDTO):
         self.last_call = message
@@ -112,26 +103,29 @@ class TaskController:
         pass
 
     def __load_priorities(self):
-        priorities = self.priorityService.get_last_items()
-        main_priorities = [
-            self.priorityService.find(id= 9),
-            self.priorityService.find(id= 1),
-            self.priorityService.find(id= 4),
-            self.priorityService.find(id= 3),
-            self.priorityService.find(id= 8),
-        ]
-        other_priorities = [item for item in priorities if item not in main_priorities]
-        main_priorities.extend(other_priorities)
+        with get_db() as session:
+            priorityService = PriorityService(session)
 
-        all_priorities = []
-        for priority in main_priorities:
-            res = {
-                'name': priority.name,
-                'src': priority.icon.src,
-                'color': priority.color,
-            }
-            all_priorities.append(res)
-        return all_priorities
+            priorities = priorityService.get_last_items()
+            main_priorities = [
+                priorityService.find(id= 9),
+                priorityService.find(id= 1),
+                priorityService.find(id= 4),
+                priorityService.find(id= 3),
+                priorityService.find(id= 8),
+            ]
+            other_priorities = [item for item in priorities if item not in main_priorities]
+            main_priorities.extend(other_priorities)
+
+            all_priorities = []
+            for priority in main_priorities:
+                res = {
+                    'name': priority.name,
+                    'src': priority.icon.src,
+                    'color': priority.color,
+                }
+                all_priorities.append(res)
+            return all_priorities
 
     def __schedDTO(self, sched):
         day = sched.day

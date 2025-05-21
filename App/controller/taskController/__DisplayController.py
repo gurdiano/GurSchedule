@@ -5,12 +5,11 @@ from App.dtos.SchedDTO import SchedDTO
 
 from App.model.services import SchedulerService
 
-from .. import SESSION
+from App.model.config import get_db
 
 class DisplayController:
     def __init__(self, page):
         self.page = page
-        self.schedulerService = SchedulerService(SESSION)
 
     def display_on_click(self, view: TaskDisplay):
         sched_id = view.data
@@ -22,12 +21,15 @@ class DisplayController:
         pass
        
     def taskDisplay(self, sched_id):
-        sched = self.schedulerService.find(id= sched_id)
-        return TaskDisplay(
-            controller= self,
-            page= self.page,
-            title= sched.task.name,
-            i_src= sched.task.icon.src,
-            color= sched.priority.color,
-            data= sched.id
-        )
+        with get_db() as session:
+            schedulerService = SchedulerService(session)
+
+            sched = schedulerService.find(id= sched_id)
+            return TaskDisplay(
+                controller= self,
+                page= self.page,
+                title= sched.task.name,
+                i_src= sched.task.icon.src,
+                color= sched.priority.color,
+                data= sched.id
+            )

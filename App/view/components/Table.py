@@ -25,12 +25,15 @@ class Table(ft.Row):
         if date:
             rows_map = {}
             for row in self.rows:
+                row.content = None
+                row.update()
+                
                 column = row.data['column']
-                row.data['date'] = self.__calculate_cell_date(date, column)
-
                 hour = row.data['row']
-                name = self.get_row_name(row.data['date'], hour)
+                new_date = self.__calculate_cell_date(date, column)
+                name = self.get_row_name(new_date, hour)
 
+                row.data['date'] = new_date
                 rows_map[name] = row
             self.rows_map = rows_map
 
@@ -82,6 +85,9 @@ class Table(ft.Row):
         self.rows_map = rows_map
         self.controls = columns
     
+    def highlight_marker(self, e, row, date):
+        self.controller.on_highlight_marker(e, row, date)
+
     def get_row_name(self, date, hour):
         return f'{date}-{hour}'
 
@@ -89,9 +95,10 @@ class Table(ft.Row):
         con = e.control
         con.bgcolor = BLACK_2 if con.bgcolor == BLACK_1 else BLACK_1
         date = con.data['date']
-
         con.update()
-        self.controller.highlight_marker(e, row, date)
+        
+        self.highlight_marker(e, row, date)
+        pass
 
     def _row(self, row, col):
         col = col + 1
