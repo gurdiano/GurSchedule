@@ -6,7 +6,7 @@ class Day(Base):
     __tablename__ = 'tb_day'
 
     id = Column(Integer, primary_key=True)
-    date  = Column(Date, unique=True)
+    date  = Column(Date, unique=True, nullable= False)
 
     schedulers = relationship('Scheduler', back_populates='day')
 

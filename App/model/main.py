@@ -1,9 +1,8 @@
 from App.model.models import *
 from App.model.config import *
-from App.model.seeds.base import create_base
 from App.model.exc.CreateBaseException import CreateBaseException
 
-from App.model.seeds.test01 import create_test01
+from App.model.seeds import base
 
 try:
     try:
@@ -16,6 +15,12 @@ try:
     except Exception as e:
         raise CreateBaseException()
     
+    try:
+        item = session.query(Priority).first()
+        if item is None: base.exec(session)
+    except Exception as e:
+        raise Exception('failed in base seeding.')
+
 except Exception as e:
     print(f'error: {e}')
     drop_tables()
@@ -25,7 +30,7 @@ from App.model.services.DayService import DayService
 from App.model.services.IconService import IconService
 from App.model.services.PriorityService import PriorityService
 from App.model.services.TaskService import TaskService
-from datetime import date, time
+import datetime
 
 dayService = DayService(session)
 iconService = IconService(session)

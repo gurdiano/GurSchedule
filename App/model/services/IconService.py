@@ -30,3 +30,15 @@ class IconService():
                 return sess.query(Icon).filter_by(src=src).first()
         except Exception as e:
             raise Exception(f'error: {type(e).__name__} failed to read icon!')
+        
+    def get_last_items(self, n_items=None):
+        try:
+            sess = self.session
+            if n_items:
+                return sess.query(Icon).order_by(Icon.id.desc()).limit(n_items).all()
+            else:
+                return sess.query(Icon).all()
+        except Exception as e:
+            raise Exception(f'error: {type(e).__name__} failed to get_last_items!')
+
+     

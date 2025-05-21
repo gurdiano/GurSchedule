@@ -5,6 +5,8 @@ from App.view.resources.utility.dicts import isoweek_day
 from App.view.resources.utility.dividers import ROW5, COL2
 from App.view.resources.utility.colors import BLACK_0, BLACK_1, BLACK_2
 
+from App.dtos.RowDTO import RowDTO
+
 class Table(ft.Row):
     def __init__(self, controller, page):
         super().__init__()
@@ -16,76 +18,56 @@ class Table(ft.Row):
         self.general_date = datetime.date.today()
         self.columns = None
         self.rows = None
-        self.create()
-        self.load()
+        self.rows_map = None
+        self.create() # build()
 
-    def calculate_cell_date(self, date, column):
-        iso = date.isoweekday()
-        weekday = isoweek_day[iso]
-        res = column - weekday 
-        return date + datetime.timedelta(days=res)
-    
-    def _on_hover(self, e, row):
-        con = e.control
-        con.bgcolor = BLACK_2 if con.bgcolor == BLACK_1 else BLACK_1
+    def load_scheds(self, date=None):
+        if date:
+            rows_map = {}
+            for row in self.rows:
+                column = row.data['column']
+                row.data['date'] = self.__calculate_cell_date(date, column)
+
+                hour = row.data['row']
+                name = self.get_row_name(row.data['date'], hour)
+
+                rows_map[name] = row
+            self.rows_map = rows_map
+
+        first_date = self.rows[0].data['date']
+        last_date = self.rows[-1].data['date']
+
+        self.controller.on_load_scheds(first_date, last_date)
+        pass
+
+    def on_click(self, e):
+        control = e.control
+        data = control.data
         
-        self.page.pubsub.send_all_on_topic(f'markers/{row}', e)
-        self.page.pubsub.send_all_on_topic(f'picker', con.data['date'])
-
-        con.update()
-    
-    def row(self, row, col):
-        col = col + 1
-        date = self.calculate_cell_date(self.general_date, col)
-        return ft.Container(
-            width=self.width,
-            height=self.height * ROW5,
-            bgcolor=BLACK_1,
-            border=ft.border.all(1, BLACK_0),
-            on_hover=lambda e: self._on_hover(e, row),
-            data={
-                'row': row, 
-                'column': col, 
-                'date': date,
-                'time': datetime.time(row, 0)
-            }  
+        rowDTO = RowDTO(
+            n_row= data['row'],
+            n_column= data['column'],
+            date= data['date'],
+            time= data['time'],
+            control= control
         )
-    
-    def column(self, n):
-        return ft.Container(
-            width=self.page.window.width * COL2,
-            height=self.height,
-            bgcolor=BLACK_0,
-            data=n,
-        )
-    
-    def load(self):
-        for row in self.rows:
-            date = row.data['date']
-            hour = row.data['time'].hour
-            row.content = self.controller.search_sched(date, hour)
-
-    def rows_date_update(self, date):
-        for row in self.rows:
-            column = row.data['column']
-            row.data['date'] = self.calculate_cell_date(date, column)
-        self.load()
-        self.update()
-        
-    def not_update(self):
-        self.update()
+        self.controller.row_on_click(rowDTO)
+        pass
 
     def create(self):
         all_rows = []
 
         columns = []
+        rows_map = {}
         for cc in range(7):
-            column = self.column(cc)
+            column = self._column(cc)
 
             rows = []
             for rr in range(24):
-
-                row = self.row(rr, cc)
+                row = self._row(rr, cc)
+                hour = row.data['row']
+                date = row.data['date']
+                rows_map[self.get_row_name(date, hour)] = row
                 rows.append(row)
                 all_rows.append(row)
             
@@ -97,15 +79,48 @@ class Table(ft.Row):
 
         self.columns = columns
         self.rows = all_rows
+        self.rows_map = rows_map
         self.controls = columns
-        
-        
-
-            
-
-
-                
-            
-
-
     
+    def get_row_name(self, date, hour):
+        return f'{date}-{hour}'
+
+    def _on_hover(self, e, row):
+        con = e.control
+        con.bgcolor = BLACK_2 if con.bgcolor == BLACK_1 else BLACK_1
+        date = con.data['date']
+
+        con.update()
+        self.controller.highlight_marker(e, row, date)
+
+    def _row(self, row, col):
+        col = col + 1
+        date = self.__calculate_cell_date(self.general_date, col)
+        return ft.Container(
+            width=self.width,
+            height=self.height * ROW5,
+            bgcolor=BLACK_1,
+            border=ft.border.all(1, BLACK_0),
+            on_hover=lambda e: self._on_hover(e, row),
+            data={
+                'row': row, 
+                'column': col, 
+                'date': date,
+                'time': datetime.time(row, 0)
+            },
+            on_click= self.on_click, 
+        )
+    
+    def _column(self, n):
+        return ft.Container(
+            width=self.page.window.width * COL2,
+            height=self.height,
+            bgcolor=BLACK_0,
+            data=n,
+        )
+
+    def __calculate_cell_date(self, date, column):
+        iso = date.isoweekday()
+        weekday = isoweek_day[iso]
+        res = column - weekday 
+        return date + datetime.timedelta(days=res)

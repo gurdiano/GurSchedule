@@ -41,9 +41,8 @@ class DatePicker(ft.Container):
         self.date = date.date()
         self.txt.value = date_str(date.month, date.day)
 
-        self.page.pubsub.send_all_on_topic('dateupdate', self.date)
-
         self.txt.update()
+        self.controller.date_update(self.date)
 
     def call_datepicker(self, e):
         _date = self.date

@@ -6,3 +6,5 @@ WHITE_1 = '#ffffff'
 WHITE_2 = '#e6ffffff'
 CTEXT_1 = "#868686"
 CTHEME_1 = '#e91e63'
+CDEFAULT = "#676767"
+FLET_DEFAULT = '#272a2f'

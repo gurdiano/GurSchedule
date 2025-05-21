@@ -1,5 +1,6 @@
-from App.model.config import get_db
-from App.model.models import Scheduler, Day, Task
+from App.model.exc.TaskConflicted import TaskConflicted
+from App.model.exc.NoFreeTime import NoFreeTime
+
 from datetime import datetime, date, timedelta
 
 class HourService():
@@ -14,8 +15,8 @@ class HourService():
         is_free_time = HourService.is_free_time(tasks, duration)
         is_conflicted = HourService.is_conflicted(matchs, begin, duration)
 
-        if not is_free_time: raise Exception('No time available to do this task.')
-        if is_conflicted: raise Exception('There is a conflict with one of the existing tasks.')
+        if not is_free_time: raise NoFreeTime('No time available to create this task.')
+        if is_conflicted: raise TaskConflicted('There is a conflict with one of the existing tasks.')
 
         return True
 

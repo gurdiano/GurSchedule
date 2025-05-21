@@ -7,15 +7,14 @@ class PriorityService():
     def __init__(self, session):
         self.session = session
 
-    def create(self, name, color, icon):
-        icon = icon.id if icon else None
+    def create(self, name, color, icon_id):
         try:
             sess = self.session
             obj = Priority()
 
             obj.name = name
             obj.color = color
-            obj.icon_id = icon
+            obj.icon_id = icon_id
 
             sess.add(obj)
             sess.commit()
@@ -46,3 +45,11 @@ class PriorityService():
             sess.commit()
         except Exception as e:
             raise Exception(f'error: {type(e).__name__} failed to update priority!')
+
+    def get_last_items(self):
+        try:
+            sess = self.session
+
+            return sess.query(Priority).order_by(Priority.id.desc()).all()
+        except Exception as e:
+            raise Exception(f'error: {type(e).__name__} failed to get_last_items!')

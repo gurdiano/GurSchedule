@@ -8,3 +8,6 @@ class PickerController():
 
     def hover_handler(self, topic, message):
         self.view.display_date(message)
+    
+    def date_update(self, date):
+        self.page.pubsub.send_all_on_topic('date-update', date)

@@ -4,7 +4,7 @@ from .PickerControler import PickerController
 from .MarkerController import MarkerController
 from .TableController import TableController
 from .TimerController import TimerController
-from .TaskController import TaskController
+from .taskController import TaskController
 
 class LayoutController():
     def __init__(self, page):
@@ -19,6 +19,10 @@ class LayoutController():
         self.taskController = TaskController(page)
 
         self.view = AppLayout(self, page)
+
+    def layout_on_load(self):
+        self.tableController.date_update_handler('layout_loaded', None)
+        pass
 
     def datepicker_view(self):
         return self.pickerController.view

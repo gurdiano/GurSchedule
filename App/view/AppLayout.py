@@ -29,6 +29,10 @@ class AppLayout:
             sleeptimers=self.controller.sleeptimer_controls(),
         )
     
+    def on_load(self):
+        self.controller.layout_on_load()
+        pass
+    
     def build(self):
         self.view.content = ft.Column(
             spacing=0,
@@ -38,4 +42,6 @@ class AppLayout:
                 self.footer
             ]
         )
+
+        self.on_load()
         return self.view
