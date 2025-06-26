@@ -16,9 +16,10 @@ class SchedulerService():
             if self.find(day= day, hour= hour, task=task): 
                 raise _IntegrityError(None, f'IntegrityError: the scheduling already exists!')
             
-            HourService.can_create(hour=hour, begin=begin, day=day, task=task)
-
             sess = self.session
+
+            HourService.can_create(session=sess, hour=hour, begin=begin, day=day, task=task)
+
             obj = Scheduler()
             obj.hour = hour
             obj.begin = begin
@@ -75,6 +76,7 @@ class SchedulerService():
             if priority: obj.priority_id = priority.id
 
             sess.commit()
+            sess.refresh(obj)
         except Exception as e:
             raise Exception(f'error: {type(e).__name__} failed to update scheduling!')
         
@@ -82,8 +84,10 @@ class SchedulerService():
         try:
             sess = self.session
             obj = self.find(id=id)
-            sess.delete(obj)
-            sess.commit()
+
+            if obj:
+                sess.delete(obj)
+                sess.commit()
         except Exception as e:
             raise Exception(f'error: {type(e).__name__} failed to delete scheduling!')
 
@@ -115,9 +119,3 @@ class SchedulerService():
         remain = n_items - len(distinct)
 
         return self.get_distinct_last_items(n_items, last_item, distinct, keys, remain)
-
-        
-
-
-    
-    

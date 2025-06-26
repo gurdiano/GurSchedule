@@ -1,6 +1,6 @@
 import flet as ft
 
-from App.view.resources.utility import fontsize, colors, srcs
+from App.view.resources.utility import colors, srcs, dividers
 
 
 class Priority(ft.Container):
@@ -10,10 +10,8 @@ class Priority(ft.Container):
         super().__init__()
         self.page = page
 
-        # self.bgcolor = 'red'
-
-        self.menu_width = width if width else page.window.width * 0.30 
-        self.menu_height = height if height else page.window.height * 0.10
+        self.menu_width = width if width else dividers.APP_LAYOUT_WIDTH * 0.30 
+        self.menu_height = height if height else dividers.APP_LAYOUT_HEIGHT * 0.10
         self.text_size = text_size
 
         self.label_icon = ft.Image(

@@ -2,9 +2,11 @@ import flet as ft
 
 from datetime import date, datetime
 from App.view.resources.utility.convs import date_str
-from App.view.resources.utility.colors import CTHEME_1, BLACK_2
-from App.view.resources.utility.fontsize import S4
 from App.view.resources.utility.srcs import CALENDAR_REGULAR
+
+from App.view.resources.utility import colors
+from App.view.resources.utility import fontsize
+from App.view.resources.utility import dividers
 
 class DatePicker(ft.Container):
     def __init__(self, controller, page):
@@ -12,22 +14,36 @@ class DatePicker(ft.Container):
         self.controller = controller
         self.page = page
         self.date = date.today()
-        self.width = self.page.window.width * 0.08
-        self.height = self.page.window.height * 0.05
-        self.bgcolor = BLACK_2
+
+        self.width = dividers.DATE_PICKER_WIDTH
+        self.height = dividers.DATE_PICKER_HEIGHT
+
+        self.bgcolor = colors.BLACK_2
         self.alignment = ft.alignment.center
 
         self.txt = ft.Text(
             date_str(self.date.month, self.date.day),
-            size=S4,
-            color=CTHEME_1,
+            size=fontsize.S4,
+            color=colors.CTHEME_1,
             weight=ft.FontWeight.W_700
         )
         self.svg = ft.Image(
             src=CALENDAR_REGULAR,
-            color=CTHEME_1,
+            color=colors.CTHEME_1,
             width=self.width * 0.40,
             height=self.height * 0.40,
+            fit= ft.ImageFit.CONTAIN,
+        )
+
+        self.on_click = self.call_datepicker
+        self.content = ft.Row(
+            spacing=10,
+            controls=[
+                self.txt,
+                self.svg
+            ],
+            alignment= ft.MainAxisAlignment.CENTER,
+            vertical_alignment= ft.CrossAxisAlignment.CENTER,
         )
 
     def display_date(self, date):
@@ -35,6 +51,12 @@ class DatePicker(ft.Container):
         new = date_str(date.month, date.day)
         self.txt.value = new if self.txt.value == act else act
         self.txt.update()
+
+    def update_display(self, date):
+        self.date = date
+        self.txt.value = date_str(date.month, date.day)
+        self.txt.update()
+        pass
 
     def on_change(self, e):
         date = e.control.value
@@ -55,16 +77,4 @@ class DatePicker(ft.Container):
         )
         _page.open(
             _datepicker
-        )
-
-    def build(self):
-        self.on_click = self.call_datepicker
-        self.content = ft.Row(
-            spacing=10,
-            wrap=True,
-            
-            controls=[
-                self.txt,
-                self.svg
-            ]
         )

@@ -1,4 +1,5 @@
 class DisplayDTO:
-    def __init__(self, sched_id=None, parent=None):
-        self.sched_id = sched_id
-        self.parent = parent
+    def __init__(self, scheds_id=None, parent=None):
+        self.scheds_id = scheds_id
+        self.parent = parent 
+    

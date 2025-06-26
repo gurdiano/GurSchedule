@@ -14,6 +14,7 @@ from App.model.services import TaskService
 from App.model.services import SchedulerService
 
 from App.dtos.SchedDTO import SchedDTO
+from App.dtos.RowDTO import RowDTO
 
 from App.model.config import get_db
 
@@ -32,20 +33,24 @@ class DetailsController:
         self.page.pubsub.send_all_on_topic('row-onclick', None)
         pass
 
+    def on_remove_sched(self):
+        with get_db() as session:
+            schedulerService = SchedulerService(session)
+            _id = self.view.data['id']
+            schedulerService.delete(_id)
+
+            self.page.pubsub.send_all_on_topic('sched-remove', None)
+            pass
+
     def on_save_sched(self, data: SchedDTO):
-        date = data.date
-        name = data.name
-        icon_src = data.icon
-        duration = data.duration
-        priority = data.priority
-        time = data.time
-        annotation = data.annotation
-        
         try:
-            day = self.__get_day(date)
-            priority = self.__get_priority(priority)
-            task = self.__get_task(name, duration, icon_src)
-            hour = time.hour
+            day = self.__get_day(data.date)
+            priority = self.__get_priority(data.priority)
+            task = self.__get_task(data.name, data.duration, data.icon)
+
+            time = data.time
+            hour = data.time.hour
+            annotation = data.annotation
             
             sched = self.__get_sched(
                 day= day,
@@ -55,14 +60,129 @@ class DetailsController:
                 begin= time,
                 annotation= annotation,
             )
-            self.page.pubsub.send_all_on_topic('sched-created', sched.id)
+
+            if sched: 
+                rowDTO = RowDTO(date= data.date, time= sched.begin)
+
+                self.view.open_creation_success('on_save_sched()')
+                self.page.pubsub.send_all_on_topic('sched-created', rowDTO)
         except UnknownError as unknown:
             raise unknown
+        except NoFreeTime:
+            None
+        except TaskConflicted:
+            None
         except Exception as e:
-            raise e
-        except Exception as e:
-            raise UnknownError('_save_sched()')
+            raise UnknownError('on_save_sched()')
         
+    def on_edit_sched(self, data: SchedDTO):
+        with get_db() as session:
+            schedulerService = SchedulerService(session)
+
+            old_id = self.view.data['id']
+            old_sched = schedulerService.find(old_id)
+
+            old_data = SchedDTO(
+                name= old_sched.task.name,
+                duration= old_sched.task.duration,
+                date= old_sched.day.date,
+                time= old_sched.begin,
+                priority= {'name': old_sched.priority.name, 'color': old_sched.priority.color},
+                icon= old_sched.task.icon.src,
+                annotation= old_sched.annotation
+            )
+
+            schedulerService.delete(id= old_id)
+            try:
+                day = self.__get_day(data.date)
+                priority = self.__get_priority(data.priority)
+                task = self.__get_task(data.name, data.duration, data.icon)
+
+                time = data.time
+                hour = data.time.hour
+                annotation = data.annotation
+                
+                sched = self.__get_sched(
+                    day= day,
+                    priority= priority,
+                    task= task,
+                    hour= hour,
+                    begin= time,
+                    annotation= annotation,
+                )
+
+                if sched: 
+                    rowDTO = RowDTO(date= data.date, time= sched.begin)
+
+                    self.view.open_creation_success('on_edit_sched()')
+                    self.page.pubsub.send_all_on_topic('sched-edit', rowDTO)
+                return
+            except UnknownError as unknown:
+                raise unknown
+            except NoFreeTime:
+                None
+            except TaskConflicted:
+                None
+            except Exception as e:
+                raise UnknownError('on_edit_sched()')
+            
+            try:
+                day = self.__get_day(old_data.date)
+                priority = self.__get_priority(old_data.priority)
+                task = self.__get_task(old_data.name, old_data.duration, old_data.icon)
+
+                time = old_data.time
+                hour = old_data.time.hour
+                annotation = old_data.annotation
+                
+                sched = self.__get_sched(
+                    day= day,
+                    priority= priority,
+                    task= task,
+                    hour= hour,
+                    begin= time,
+                    annotation= annotation,
+                )
+                self.view.data['id'] = sched.id
+            except Exception as e:
+                raise UnknownError('on_edit_sched() trying remake sched')
+        pass
+
+    def on_overwrite_sched(self, data: SchedDTO):
+        with get_db() as session:
+            schedulerService = SchedulerService(session)
+        
+            try:
+                day = self.__get_day(data.date)
+                priority = self.__get_priority(data.priority)
+                task = self.__get_task(data.name, data.duration, data.icon)
+
+                time = data.time
+                annotation = data.annotation
+                hour = time.hour
+
+                if self.view.data: schedulerService.delete(id= self.view.data['id'])
+
+                for sched_id in self.view.conflicts_id:
+                    schedulerService.delete(id= sched_id)
+                
+                sched = self.__get_sched(
+                    day= day,
+                    priority= priority,
+                    task= task,
+                    hour= hour,
+                    begin= time,
+                    annotation= annotation,
+                )
+
+                if sched: self.view.open_creation_success('on_overwrite_sched()')
+
+                self.page.pubsub.send_all_on_topic('sched-overwrite', None)
+            except UnknownError as unknown:
+                raise unknown
+            except Exception as e:
+                raise UnknownError('on_overwrite_sched()')
+
     def open_details_handler(self, topic, data: SchedDTO):
         self.view.icon = data.icon
         self.view.name = data.name
@@ -71,15 +191,15 @@ class DetailsController:
         self.view.time = data.time
         self.view.priority = data.priority
         self.view.annotation = data.annotation
+        self.view.data = data.sched_id
 
         action = None
-        if topic == 'task-completed': action = 'edit'
-        if topic == 'task-selected': action = 'back_taskcreator'
-        if topic == 'task-display': action = 'back_scheduler'
+        if topic == 'task-completed': action = 'creator'
+        if topic == 'task-selected': action = 'preview'
+        if topic == 'task-display': action = 'edit'
         
-
         self.view.update_view()
-        self.view.back_action(action)
+        self.view.set_mode(action)
         self.page.pubsub.send_all_on_topic('load-priorities', 'DetailsController')
 
         def clear(e):
@@ -106,6 +226,17 @@ class DetailsController:
         self.page.update()
         pass
     
+    def _on_load_all_icons(self):
+        with get_db() as session:
+            iconService = IconService(session)
+
+            srcs = []
+            icons = iconService.get_last_items()
+            for icon in icons:
+                srcs.append(icon.src)
+
+            return srcs
+        
     def __get_day(self, date):
         with get_db() as session:
             dayService = DayService(session)
@@ -177,9 +308,30 @@ class DetailsController:
                 if priority != sched.priority or annotation != sched.annotation:
                     schedulerService.update(priority= priority, annotation= annotation, id=sched.id)
                 return sched
-            except NoFreeTime:
-                print(f'*** error -> NoFreeTime: to implement ***') # when there's no available time in an hour...
-            except TaskConflicted:
-                print(f'*** error -> TaskConflicted: to implement ***') # when there is available time, but there is other tasks within period...
+            except NoFreeTime as personException:
+                self.__open_overwrite_confirm(personException.scheds)
+                raise personException
+            except TaskConflicted as personException:
+                self.__open_overwrite_confirm(personException.scheds)
+                raise personException
             except Exception:
                 raise UnknownError('__get_sched()')
+            
+    def __open_overwrite_confirm(self, scheds):
+        schedsDTO = []
+        conflicts_id = []
+        for sched in scheds:
+            schedsDTO.append(
+                SchedDTO(
+                    name= sched.task.name,
+                    date= sched.day.date,
+                    time= sched.begin,
+                    duration= sched.task.duration,
+                    sched_id= sched.id,
+                )
+            )
+            conflicts_id.append(sched.id)
+        
+        self.view.conflicts_id = conflicts_id
+        self.view.open_overwrite_confirm(schedsDTO)
+        pass

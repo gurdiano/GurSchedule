@@ -1,26 +1,26 @@
 import flet as ft
 
 from App.view.components.Period import Period
-from App.view.resources.utility.dividers import ROW2, COL1, COL3
+from App.view.resources.utility import dividers
 
 class Body(ft.Row):
     def __init__(self, father, markers=None, table=None):
         super().__init__()
         self.father = father
         self.width = self.father.width
-        self.height = self.father.height * ROW2
+        self.height = self.father.height * dividers.ROW2
         self.spacing=0
         self.markers = markers
         self.table = table
 
         self.side = ft.Container(
-            width= self.width * COL1,
+            width= self.width * dividers.COL1,
             height= self.height
         )
 
     def divider(self):
         return ft.Container(
-            width= self.side.width * COL3,
+            width= self.side.width * dividers.COL3,
             height= self.side.height
         )
 

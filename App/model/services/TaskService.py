@@ -9,10 +9,9 @@ class TaskService():
     def create(self, name, duration, icon):
         try:
             sess = self.session
-            obj = Task()
-            
-            icon = icon.id if icon else None
 
+            obj = Task()
+            icon = icon.id if icon else None
             obj.name = name 
             obj.duration = duration
             obj.icon_id = icon
@@ -48,5 +47,6 @@ class TaskService():
             obj = self.find(id=id)
             obj.icon_id = icon
             sess.commit()
+            sess.refresh(obj)
         except Exception as e:
             raise Exception(f'error: {type(e).__name__} failed to update task!')

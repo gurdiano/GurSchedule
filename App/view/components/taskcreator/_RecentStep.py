@@ -20,6 +20,15 @@ class RecentStep(ft.Container):
         self.taskcreator.next.disabled = False
         self.taskcreator.next.update()
 
+    def more_btn(self):
+        more_btn = self.taskcreator._icon(
+            color=colors.BLACK_2,
+            name='...',
+            src=srcs.CHEVRON_RIGHT,
+        )
+        more_btn.controls[0].on_click = self.more_tasks
+        return more_btn
+
     def load_icons(self, n, id):
         items = self.taskcreator.controller._load_scheds(n, id)
         
@@ -33,15 +42,6 @@ class RecentStep(ft.Container):
 
             icon.data = res['id']
             icons.append(icon)
-
-        if len(icons) == 7:
-            more_btn = self.taskcreator._icon(
-                color=colors.BLACK_2,
-                name='...',
-                src=srcs.CHEVRON_RIGHT,
-            )
-            icons.append(more_btn)
-            more_btn.controls[0].on_click = self.more_tasks
         return icons
     
     def more_tasks(self, e):
@@ -66,7 +66,12 @@ class RecentStep(ft.Container):
         title = group.controls[0]
         row = group.controls[1]
 
-        _controls = self.load_icons(7, None)
+        _controls = self.load_icons(9, None)
+
+        if len(_controls) == 9: 
+            _controls.pop()
+            _controls.pop()
+            _controls.append(self.more_btn())
         
         title.content.value = 'Recent tasks:'
         row.controls = _controls

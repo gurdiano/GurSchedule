@@ -1,11 +1,15 @@
 from App.model.exc.TaskConflicted import TaskConflicted
 from App.model.exc.NoFreeTime import NoFreeTime
 
+from App.model.models import Day
+
 from datetime import datetime, date, timedelta
 
 class HourService():
     @staticmethod
-    def can_create(day, hour, begin, task):
+    def can_create(session, day, hour, begin, task):
+        day = session.query(Day).filter_by(id = day.id).first()
+
         scheds =  day.schedulers
         duration = task.duration
 
@@ -15,8 +19,10 @@ class HourService():
         is_free_time = HourService.is_free_time(tasks, duration)
         is_conflicted = HourService.is_conflicted(matchs, begin, duration)
 
-        if not is_free_time: raise NoFreeTime('No time available to create this task.')
-        if is_conflicted: raise TaskConflicted('There is a conflict with one of the existing tasks.')
+        if is_conflicted: 
+            raise TaskConflicted(is_conflicted, 'There is a conflict with one of the existing tasks.')
+        
+        if not is_free_time: raise NoFreeTime(is_conflicted, 'No time available to create this task.')
 
         return True
 
@@ -32,13 +38,14 @@ class HourService():
         begin_time = datetime.combine(temp_date, begin) 
         end_time = begin_time + timedelta(minutes=duration)
 
+        conflicted = []
         for sched in matchs:
             task_begin = datetime.combine(temp_date, sched.begin)
             task_duration = sched.task.duration
             task_end = task_begin + timedelta(minutes=task_duration)
-            if begin_time < task_end and task_begin < end_time: return True
+            if begin_time < task_end and task_begin < end_time: conflicted.append(sched)
 
-        return False
+        return conflicted
 
     @staticmethod
     def _get_matchs(scheds, hour):

@@ -11,6 +11,9 @@ from App.dtos.RowDTO import RowDTO
 
 from App.model.config import get_db
 
+from App.model.exc.IntegrityError import IntegrityError
+from App.model.exc.UnknownError import UnknownError
+
 class CreatorController:
     def __init__(self, page: ft.Page):
         self.page = page
@@ -21,6 +24,17 @@ class CreatorController:
         pass
 
     def on_creat_priority(self, priority):
+        pass
+
+    def on_creat_icon(self, src):
+        with get_db() as session:
+            iconService = IconService(session= session)
+            try:
+                return iconService.create(src= src)
+            except IntegrityError:
+                return iconService.find(src= src)
+            except Exception:
+                raise UnknownError('on_creat_icon()')
         pass
 
     def on_load_priorities(self):
@@ -34,6 +48,8 @@ class CreatorController:
 
             if sched:
                 schedDTO = self.__schedDTO(sched)
+                schedDTO.date = self.view.date
+                schedDTO.time = self.view.time
                 self.page.pubsub.send_all_on_topic('task-selected', schedDTO)
             pass
 
@@ -51,7 +67,7 @@ class CreatorController:
             time = data.time
             last_call = last_call.control if last_call else None
 
-            if data.control != last_call:
+            if data.control != last_call or self.view.date == None and self.view.time == None:
                 self.view.reset(date, time)
                 self.page.pubsub.send_all_on_topic('last-call', data)
 

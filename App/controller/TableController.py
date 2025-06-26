@@ -1,20 +1,19 @@
+import datetime
 from App.view.components.Table import Table
 
 from App.model.services import SchedulerService
 from App.model.services import DayService
 
 from App.dtos.DisplayDTO import DisplayDTO
+from App.dtos.ColumnsDTO import ColumnsDTO
+from App.dtos.RowDTO import RowDTO
 
 from App.model.config import get_db
-
-import datetime
 
 class TableController:
     def __init__(self, page):
         self.page = page
         self.view = Table(self, page)
-
-        self.page.pubsub.subscribe_topic('date-update', self.date_update_handler)    
     
     def on_load_scheds(self, first_date, last_date):
         with get_db() as session:
@@ -32,18 +31,47 @@ class TableController:
                     _scheds = schedService.find_all(day=day)
                     scheds.extend(_scheds if _scheds else [])
 
-
+            res = {}
             for sched in scheds:
-                sched_id = sched.id
                 control_name = f'{sched.day.date}-{sched.hour}'
-
                 control = self.view.rows_map[control_name]
-                self.page.pubsub.send_all_on_topic('sched-load', DisplayDTO(sched_id= sched_id, parent=control))
+                sched_id = sched.id
+
+                if control not in res:
+                    res[control] = [sched_id]
+                else:
+                    res[control].append(sched_id)
+
+            self.page.pubsub.send_all_on_topic('sched-queue', len(res))
+            for control in res:
+                self.page.pubsub.send_all_on_topic('sched-load', DisplayDTO(scheds_id= res[control], parent=control))
             pass
     
     def on_highlight_marker(self, e, row, date):
         self.page.pubsub.send_all_on_topic(f'markers/{row}', e)
         self.page.pubsub.send_all_on_topic(f'picker', date)
+        pass
+
+    def row_load_handler(self, topic, message: RowDTO):
+        with get_db() as session:
+            schedulerService = SchedulerService(session)
+            dayService = DayService(session)
+
+            date = message.date
+            hour = message.time.hour
+
+            control_name = f'{date}-{hour}'
+            if control_name in self.view.rows_map:
+                control = self.view.rows_map[control_name]
+
+                day = dayService.find(date= date)
+                scheds = schedulerService.find_all(day= day, hour= hour)
+
+                scheds_id = []
+                for sched in scheds:
+                    scheds_id.append(sched.id)
+
+                self.page.pubsub.send_all_on_topic('sched-load', DisplayDTO(scheds_id= scheds_id, parent=control))
         pass
 
     def row_on_click(self, data):
@@ -53,3 +81,26 @@ class TableController:
     def date_update_handler(self, topic, message):
         self.view.load_scheds(message)
         pass
+
+    def table_reload_handler(self, topic, message):
+        date = self.view.rows[0].data['date']
+        self.view.load_scheds(date)
+        pass
+
+    def scheds_load_handler(self, topic, message):
+        self.view.progress_ring(0.5)
+        pass
+
+    def table_get_columns(self, topic, n_column):
+        index = n_column - 1
+        curr = index
+        nex = index + 1 if index != 6 else 0
+
+        current_column = self.view.columns[curr].content.controls
+        next_column = self.view.columns[nex].content.controls
+
+        return ColumnsDTO(
+            current= current_column,
+            next= next_column,
+            n_column= n_column,
+        )

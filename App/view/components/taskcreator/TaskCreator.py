@@ -3,8 +3,9 @@ import flet as ft
 from App.view.resources.utility import colors
 from App.view.resources.utility import fontsize
 from App.view.resources.utility import srcs
+from App.view.resources.utility import dividers
 
-from ._Stepper import Stepper
+from .others._Stepper import Stepper
 from ._RecentStep import RecentStep
 from ._TaskStep import TaskStep
 from ._TimeStep import TimeStep
@@ -17,10 +18,10 @@ class TaskCreator(ft.Container):
         super().__init__()
         self.controller = controller
         self.page = page
-        self.width = self.page.window.width * 0.50
-        self.height = self.page.window.height * 0.50
-        self._width = self.page.window.width * 0.50
-        self._height = self.page.window.height * 0.50
+        self.width = dividers.APP_LAYOUT_WIDTH * 0.50
+        self.height = dividers.APP_LAYOUT_HEIGHT * 0.50
+        self._width = dividers.APP_LAYOUT_WIDTH * 0.50
+        self._height = dividers.APP_LAYOUT_HEIGHT * 0.50
         self.alignment = ft.alignment.top_center
         self.bgcolor = colors.BLACK_1
         self.border = ft.border.all(1, colors.BLACK_3)
@@ -112,7 +113,7 @@ class TaskCreator(ft.Container):
             on_click=self.back_step,
         )
         
-        self.stepper = Stepper(self.page, self)
+        self.stepper = Stepper(self, self.page)
 
         self.recent_content = RecentStep(self, page)
         self.task_content = TaskStep(self, page)
@@ -155,10 +156,10 @@ class TaskCreator(ft.Container):
             3 : self.priority_content,
         }
         self.current_size = {
-            0 : [self.page.window.width * 0.50, self.page.window.height * 0.50],
-            1 : [self.page.window.width * 0.50, self.page.window.height * 0.80],
-            2 : [self.page.window.width * 0.50, self.page.window.height * 0.60],
-            3 : [self.page.window.width * 0.50, self.page.window.height * 0.80],
+            0 : [dividers.APP_LAYOUT_WIDTH * 0.50, dividers.APP_LAYOUT_HEIGHT * 0.50],
+            1 : [dividers.APP_LAYOUT_WIDTH * 0.50, dividers.APP_LAYOUT_HEIGHT * 0.80],
+            2 : [dividers.APP_LAYOUT_WIDTH * 0.50, dividers.APP_LAYOUT_HEIGHT * 0.60],
+            3 : [dividers.APP_LAYOUT_WIDTH * 0.50, dividers.APP_LAYOUT_HEIGHT * 0.80],
         }
 
     def completed(self):
@@ -181,7 +182,7 @@ class TaskCreator(ft.Container):
         self.duration = 60
 
         self.name = None
-        self.priority = {'name': 'DEFULT', 'src': srcs.BAN, 'color': None}
+        self.priority = {'name': 'DEFAULT', 'src': srcs.BAN, 'color': None}
         self.annotation = None
 
         size = self.current_size[0]
@@ -226,6 +227,7 @@ class TaskCreator(ft.Container):
             
         _name = f'{name[:6]}...' if len(name) >= 8 else name
         _tooltip = name if len(name) >= 8 else None
+        _name = _name.capitalize()
 
         def _default_on_click(e):
             control = e.control

@@ -5,7 +5,7 @@ from App.view.resources.utility import fontsize
 from App.view.resources.utility import srcs
 
 class Stepper(ft.Column):
-    def __init__(self, page, parent):
+    def __init__(self, parent, page):
         super().__init__()
 
         self.page = page

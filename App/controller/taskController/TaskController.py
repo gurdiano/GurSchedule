@@ -21,28 +21,27 @@ class TaskController:
         self.detailsController = DetailsController(page)
         self.displayController = DisplayController(page)
         
-        self.page.pubsub.subscribe_topic('task-display', self.task_display_handler)
-        self.page.pubsub.subscribe_topic('row-onclick', self.row_on_click_handler)
         self.page.pubsub.subscribe_topic('task-completed', self.task_completed_handler)
         self.page.pubsub.subscribe_topic('task-selected', self.task_selected_handler)
-        self.page.pubsub.subscribe_topic('load-priorities', self.load_priorities_handler)
         self.page.pubsub.subscribe_topic('last-call', self.last_call_handler)
-        self.page.pubsub.subscribe_topic('sched-load', self.sched_load_handler)
+        self.page.pubsub.subscribe_topic('load-priorities', self.load_priorities_handler)
         self.page.pubsub.subscribe_topic('sched-created', self.sched_created_handler)
-
+        self.page.pubsub.subscribe_topic('sched-edit', self.sched_edit_handler)
+        self.page.pubsub.subscribe_topic('sched-remove', self.sched_edit_handler)
+        self.page.pubsub.subscribe_topic('sched-overwrite', self.sched_edit_handler)
         self.page.pubsub.subscribe_topic('priority-created', self.priority_created_handler)
 
     def sched_load_handler(self, topic, message: DisplayDTO):
-            self.displayController.created_sched_handler(control= message.parent, sched_id= message.sched_id)
-            message.parent.update()
+        self.displayController.created_sched_handler(control= message.parent, scheds_id= message.scheds_id)
+        message.parent.update()
+        pass
+    
+    def sched_created_handler(self, topic, message: RowDTO):
+        self.page.pubsub.send_all_on_topic('row-load', message)
+        pass
 
-    def sched_created_handler(self, topic, sched_id):
-        control = self.last_call.control
-        self.displayController.created_sched_handler(control= control, sched_id= sched_id)
-
-        control.update()
-        self.page.overlay.clear()
-        self.page.update()
+    def sched_edit_handler(self, topic, message):
+        self.page.pubsub.send_all_on_topic('table-update', None)
         pass
 
     def task_selected_handler(self, topic, message: SchedDTO):
@@ -61,16 +60,17 @@ class TaskController:
         with get_db() as session:
             schedulerService = SchedulerService(session)
 
-            sched = schedulerService.find(id= message.sched_id)
+            sched = schedulerService.find(id= message.scheds_id)
             parent  = message.parent
             schedDTO = self.__schedDTO(sched)
+            schedDTO.sched_id = message.scheds_id
 
             rowDTO = RowDTO(
                 n_row= parent.data['row'],
                 n_column= parent.data['column'],
                 date= parent.data['date'],
                 time= parent.data['time'],
-                control= parent.control
+                control= parent
             )
 
             self.last_call = rowDTO
@@ -79,6 +79,10 @@ class TaskController:
 
     def last_call_handler(self, topic, message: RowDTO):
         self.last_call = message
+
+    def display_new_task_handler(self, topic, message: RowDTO):
+        self.creatorController.open_creator_handler(None, message)
+        pass
 
     def row_on_click_handler(self, topic, message: RowDTO):
         last_call = self.last_call
@@ -108,11 +112,12 @@ class TaskController:
 
             priorities = priorityService.get_last_items()
             main_priorities = [
-                priorityService.find(id= 9),
                 priorityService.find(id= 1),
-                priorityService.find(id= 4),
+                priorityService.find(id= 2),
                 priorityService.find(id= 3),
-                priorityService.find(id= 8),
+                priorityService.find(id= 4),
+                priorityService.find(id= 5),
+                priorityService.find(id= 6),
             ]
             other_priorities = [item for item in priorities if item not in main_priorities]
             main_priorities.extend(other_priorities)

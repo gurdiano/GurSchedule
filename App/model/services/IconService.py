@@ -9,7 +9,9 @@ class IconService():
     def create(self, src):
         try:
             sess = self.session
+
             obj = Icon(src=src)
+            
             sess.add(obj)
             sess.commit()
             sess.refresh(obj)

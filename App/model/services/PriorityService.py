@@ -43,6 +43,7 @@ class PriorityService():
             obj = self.find(id=id)
             obj.color = color
             sess.commit()
+            sess.refresh(obj)
         except Exception as e:
             raise Exception(f'error: {type(e).__name__} failed to update priority!')
 

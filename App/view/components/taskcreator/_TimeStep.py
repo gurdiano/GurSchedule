@@ -55,19 +55,22 @@ class TimeStep(ft.Container):
 
     def open_watch(self, e):
         def update_values(e):
-            if cupertino_timer_picker.value != 3540:
-                self.taskcreator.duration = int(cupertino_timer_picker.value / 60)
-                self._duration_str()
-                self._time_str()
-                self.watch_field.update()
-                self.clock_field.update()
-                self.next_btn_update()
+            _value = int(cupertino_timer_picker.value / 60)
+            if cupertino_timer_picker.value > 3540:
+                _value = 60
+
+            self.taskcreator.duration = _value if self.taskcreator.time.minute + _value <= 60 else 60 - self.taskcreator.time.minute
+            self._duration_str()
+            self._time_str()
+            self.watch_field.update()
+            self.clock_field.update()
+            self.next_btn_update()
 
         cupertino_timer_picker = ft.CupertinoTimerPicker(
-            value=3540,
+            value=3541,
             second_interval=10,
             minute_interval=1,
-            mode=ft.CupertinoTimerPickerMode.HOUR_MINUTE,
+            mode=ft.CupertinoTimerPickerMode.MINUTE_SECONDS,
             on_change=update_values,
         )
 
@@ -82,11 +85,16 @@ class TimeStep(ft.Container):
 
     def open_clock(self, e):
         def update_values(e):
+            if time_picker.value.minute + self.taskcreator.duration > 60:
+                self.taskcreator.duration = 60 - time_picker.value.minute
+                self._duration_str()
+                self.watch_field.update()
+
             if time_picker.value != self.taskcreator.time:
                 self.taskcreator.time = time_picker.value
                 self._time_str()
                 self.clock_field.update()
-
+            
         time_picker = ft.TimePicker(
             confirm_text="Confirm",
             error_invalid_text="Time out of range",
