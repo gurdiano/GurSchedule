@@ -1,9 +1,0 @@
-{
-    "python.analysis.extraPaths": ["C:/Users/tiago/Desktop/GurSchedule"],
-    "python.defaultInterpreterPath": "C:/Users/tiago/Desktop/GurSchedule/Scripts/python.exe",
-
-    "workbench.colorTheme": "Monokai",
-    "files.exclude": {
-        "**/__pycache__": true,
-    }
-}
