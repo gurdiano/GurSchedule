@@ -36,6 +36,7 @@ def main(page: ft.Page):
 
     page.window.bgcolor = ft.Colors.TRANSPARENT
     page.bgcolor = ft.Colors.TRANSPARENT
+    page.theme_mode = ft.ThemeMode.DARK
     page.window.maximizable = False
     page.window.skip_task_bar = True
     

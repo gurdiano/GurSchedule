@@ -126,6 +126,7 @@ class Timer(ft.Container):
         txt = 0
 
         self.content = self._control(txt, src)
+        self.tooltip = 'free time'
         pass
 
     def build(self):
