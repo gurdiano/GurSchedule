@@ -19,7 +19,7 @@ GurSchedule is a personal agenda app created by **Tiago Gurdiano**, originally i
 
 To run this project locally, make sure you have:
 
-- **Python 3.9 or higher** installed
+- **Python 3.12 or higher** installed
 
 Then, in your terminal:
 
