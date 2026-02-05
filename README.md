@@ -7,6 +7,8 @@ GurSchedule is a personal agenda app created by **Tiago Gurdiano**, originally i
 
 ---
 
+![image](https://pub-5e8ae4f6596d4f7eb0ac9e44a84115dc.r2.dev/GurSchedule/images/GurScheduleRep.png)
+
 ## 🚀 Features
 
 - Weekly agenda planning  
